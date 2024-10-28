@@ -21,10 +21,10 @@ def build_gui():
     main_window.protocol("WM_DELETE_WINDOW", stop_loop)
 
     message_variable = tk.StringVar()
-
+    row_span_multiplier = 12
     # Left part of the GUI, Scan button and list of detected devices
     device_frame = ttk.Labelframe(main_window, text='Devices')
-    device_frame.grid(padx=5, pady=5, sticky='ew')
+    device_frame.grid(padx=5, pady=5, rowspan=row_span_multiplier, sticky='ew')
     device_iframe = tk.Frame(device_frame)
     device_iframe.pack()
     scrollbar = ttk.Scrollbar(device_iframe)
@@ -43,27 +43,30 @@ def build_gui():
         text='Scan for BLE devices',
         command=lambda: asyncio.create_task(scan()),  # scan is asynchronous!
     )
-    scan_button.grid(column=0, row=1, padx=5, pady=5)
+    scan_button.grid(column=0, row=row_span_multiplier, rowspan=2*row_span_multiplier, padx=5, pady=5)
 
     # Right part of the GUI, Connect Button, data window and status messages
     data_frame = ttk.Labelframe(main_window, text='Device Data')
-    data_frame.grid(padx=5, pady=5, row=0, column=1, sticky='ns')
+    data_frame.grid(padx=5, pady=5, row=0, rowspan=row_span_multiplier ,column=1, sticky='ns')
     device_data = tk.Text(data_frame, height=10, width=30)
-    device_data.grid(padx=5, pady=5)
+    device_data.grid(padx=5, rowspan=row_span_multiplier, pady=5)
 
     message_frame = ttk.Labelframe(data_frame, text='Status')
-    message_frame.grid(column=0, row=1, padx=5, pady=5, sticky='ew')
+    message_frame.grid(column=0, row=row_span_multiplier, rowspan=2*row_span_multiplier ,padx=5, pady=5, sticky='ew')
     message_label = ttk.Label(
         message_frame, textvariable=message_variable, width=38
     )
-    message_label.grid(row=1, padx=5, pady=5)
+    message_label.grid(row=row_span_multiplier, rowspan=2*row_span_multiplier,padx=5, pady=5)
     connect_button = ttk.Button(
         main_window,
         text='Connect/Disconnect to/from device',
         command=lambda: asyncio.create_task(connect()),
     )
-    connect_button.grid(column=1, row=1, padx=5, pady=5)
-
+    connect_button.grid(column=1, row=row_span_multiplier, rowspan=2*row_span_multiplier, padx=5, pady=5)
+    #cflabel = tk.Label(main_window, text="Configure")
+    #cflabel.grid(column=2, row=0)
+    #txtbx = tk.Entry(main_window, width=30)
+    #txtbx.grid(column=3, row=0, padx=5, pady=5)
     # Don't do: main_window.mainloop()!
     # We are using the asyncio event loop in 'show' to call
     # main_window.update() regularly.
@@ -77,8 +80,8 @@ async def scan():
 
     try:
         async with BleakScanner() as scanner:
-            message_variable.set('Scanning (10 secs)...')
-            await asyncio.sleep(10)
+            message_variable.set('Scanning (5 secs)...')
+            await asyncio.sleep(5)
             message_variable.set('Scanning finished.')
             result = scanner.discovered_devices_and_advertisement_data
             if result:
