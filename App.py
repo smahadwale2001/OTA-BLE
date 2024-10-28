@@ -30,7 +30,7 @@ def build_gui():
     scrollbar = ttk.Scrollbar(device_iframe)
     device_list = ttk.Treeview(
         device_iframe,
-        height=20,
+        height=15,
         yscrollcommand=scrollbar.set,
         show='tree',
     )
