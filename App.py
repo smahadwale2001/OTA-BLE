@@ -1,9 +1,10 @@
 import asyncio
 import tkinter as tk
 import tkinter.ttk as ttk
-
+import cv2
 from bleak import BleakClient, BleakError, BleakScanner
-
+import numpy as np
+from PIL import Image,ImageTk
 
 scan_result = {}
 is_connected = False
@@ -63,6 +64,8 @@ def build_gui():
         command=lambda: asyncio.create_task(connect()),
     )
     connect_button.grid(column=1, row=row_span_multiplier, rowspan=2*row_span_multiplier, padx=5, pady=5)
+    configure_button = ttk.Button(main_window, text='Configure OTA Packet', command=lambda: configure_window())
+    configure_button.grid(column=2, row=0, padx=5, pady=5)
     #cflabel = tk.Label(main_window, text="Configure")
     #cflabel.grid(column=2, row=0)
     #txtbx = tk.Entry(main_window, width=30)
@@ -71,6 +74,54 @@ def build_gui():
     # We are using the asyncio event loop in 'show' to call
     # main_window.update() regularly.
 
+def configure_window():
+    global packetValues, configureWindow, configureCombox, byteSize
+    packetValues = ['Packet Length','Packet Number','File Size','CRC','Data']
+    configureWindow = tk.Toplevel(main_window)
+    configureWindow.title("Packet Configuration")
+    #configureWindow.geometry("200x200")
+    configureCombox = ttk.Combobox(configureWindow,values=packetValues)
+    configureCombox.grid(column=0,row=0,pady=5,padx=5)
+    byteSize = tk.Entry(configureWindow, width=10)
+    byteSize.grid(column=1,row=0,pady=5,padx=5)
+    configAddButton = ttk.Button(configureWindow, text='Add Option',command=lambda: reArrangePacket())
+    configAddButton.grid(column=2,row=0,pady=5,padx=5)
+    saveButton = ttk.Button(configureWindow, text='Save Configuration',command=lambda: saveConfiguration())
+    saveButton.grid(column=3,row=0,pady=5,padx=5)
+
+def reArrangePacket():
+    global PacketByteSize, packetDefination, selIndex, totalSize, configureCombox, img, prevOrg
+    RED = (0, 0, 255)
+    GREEN = (0, 255, 0)
+    BLUE = (255, 0, 0)
+    YELLOW = (0, 255, 255)
+    CYAN = (255, 255, 0)
+    MAGENTA = (255, 0, 255)
+    color = [RED,GREEN,BLUE,YELLOW,CYAN,MAGENTA]
+    if len(packetValues)==5:
+        PacketByteSize = 0
+        packetDefination = {}
+        selIndex = 0
+        totalSize = 0
+        prevOrg = 50
+        img = np.ones(dtype=np.uint8,shape=(200,350,3)) * 255
+    selType = configureCombox.get()
+    selByteSize = int(byteSize.get())
+    totalSize+=selByteSize
+    packetDefination[selType] = [selByteSize,selIndex]
+    packetValues.remove(selType)
+    configureCombox = ttk.Combobox(configureWindow,values=packetValues)
+    configureCombox.grid(column=0,row=0,pady=5,padx=5)
+    img = cv2.rectangle(img, (prevOrg,10), (prevOrg+int(selByteSize),40), color[selIndex], -1)
+    prevOrg+=int(selByteSize)+1
+    img = cv2.putText(img, selType+' : '+str(selByteSize), (50,50+selIndex*15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color[selIndex], 1, cv2.LINE_AA)
+    selIndex+=1
+    consumeGraph = tk.Label(configureWindow, image=ImageTk.PhotoImage(Image.fromarray(img.astype('uint8'))))
+    consumeGraph.grid(column=0,row=1)
+    print(packetDefination)
+
+def saveConfiguration():
+    pass
 
 async def scan():
     """Scan for unconnected Bluetooth LE devices."""
