@@ -5,15 +5,18 @@ import cv2
 from bleak import BleakClient, BleakError, BleakScanner
 import numpy as np
 from PIL import Image,ImageTk
+from tkinter.filedialog import askopenfilename
 
 scan_result = {}
 is_connected = False
 
+fileDataChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
+fileModeChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
 
 def build_gui():
     """Build a simple GUI."""
     # For the sake of simplicity, we use some global variables:
-    global main_window, device_list, device_data, message_variable
+    global main_window, device_list, device_data, message_variable, filename, filenameEntry
 
     main_window = tk.Tk()
     main_window.title('Tkinter/bleak asyncio Demo')
@@ -66,6 +69,15 @@ def build_gui():
     connect_button.grid(column=1, row=row_span_multiplier, rowspan=2*row_span_multiplier, padx=5, pady=5)
     configure_button = ttk.Button(main_window, text='Configure OTA Packet', command=lambda: configure_window())
     configure_button.grid(column=2, row=0, padx=5, pady=5)
+
+    filenameEntry = tk.Entry(main_window)
+    filenameEntry.grid(column=2,row=1,padx=5,pady=5)
+
+    filenameButton = ttk.Button(main_window, text='Load File', command=lambda: getFileName())
+    filenameButton.grid(column=3,row=1,padx=5,pady=5)
+
+    sendButton = ttk.Button(main_window, text='Send File', command=lambda: asyncio doBleFtp())
+    sendButton.grid(column=2,row=2,padx=5,pady=5)
     #cflabel = tk.Label(main_window, text="Configure")
     #cflabel.grid(column=2, row=0)
     #txtbx = tk.Entry(main_window, width=30)
@@ -73,6 +85,30 @@ def build_gui():
     # Don't do: main_window.mainloop()!
     # We are using the asyncio event loop in 'show' to call
     # main_window.update() regularly.
+
+async def doBleFtp():
+    global fileDataChar, fileModeChar, fileDataList, filename
+    with open(filename, mode='rb') as file:
+        fileContent = file.read()
+    n=248
+    fileDataList=[fileContent[i:i+n] for i in range(0, len(fileContent), n)]
+    maxIndex = len(fileDataList)
+    cIndex = 0
+    while cIndex < maxIndex:
+        await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
+        cIndex+=1
+
+def getFileDataIncremental(packetIndex):
+    global fileDataList
+    Plength = len(fileDataList(packetIndex)).to_bytes(1,'big')
+    Pindex = packetIndex.to_bytes(2,'big')
+    return Pindex+Plength+fileDataList[packetIndex]
+
+
+def getFileName():
+    global filename, filenameEntry
+    filename = askopenfilename()
+    filenameEntry.insert(0,filename)
 
 def configure_window():
     global packetValues, configureWindow, configureCombox, byteSize
@@ -97,14 +133,14 @@ def reArrangePacket():
     YELLOW = (0, 255, 255)
     CYAN = (255, 255, 0)
     MAGENTA = (255, 0, 255)
-    color = [RED,GREEN,BLUE,YELLOW,CYAN,MAGENTA]
+    color = [RED,GREEN,BLUE,YELLOW,MAGENTA]
     if len(packetValues)==5:
         PacketByteSize = 0
         packetDefination = {}
         selIndex = 0
         totalSize = 0
         prevOrg = 50
-        img = np.ones(dtype=np.uint8,shape=(200,350,3)) * 255
+        img = np.ones(dtype=np.uint8,shape=(150,350,3)) * 255
     selType = configureCombox.get()
     selByteSize = int(byteSize.get())
     totalSize+=selByteSize
@@ -114,10 +150,13 @@ def reArrangePacket():
     configureCombox.grid(column=0,row=0,pady=5,padx=5)
     img = cv2.rectangle(img, (prevOrg,10), (prevOrg+int(selByteSize),40), color[selIndex], -1)
     prevOrg+=int(selByteSize)+1
-    img = cv2.putText(img, selType+' : '+str(selByteSize), (50,50+selIndex*15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color[selIndex], 1, cv2.LINE_AA)
+    img = cv2.putText(img, selType+' : '+str(selByteSize), (50,60+selIndex*16), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color[selIndex], 1, cv2.LINE_AA)
     selIndex+=1
-    consumeGraph = tk.Label(configureWindow, image=ImageTk.PhotoImage(Image.fromarray(img.astype('uint8'))))
-    consumeGraph.grid(column=0,row=1)
+    imageGP = ImageTk.PhotoImage(image=Image.fromarray(img))
+    consumeGraph = tk.Label(configureWindow)
+    consumeGraph.photo_image = imageGP
+    consumeGraph.configure(image=imageGP)
+    consumeGraph.grid(column=0,row=1,columnspan=4,padx=5,pady=5)
     print(packetDefination)
 
 def saveConfiguration():

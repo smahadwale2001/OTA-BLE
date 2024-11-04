@@ -1,2 +1,4 @@
 Bleak
-tkinter
+pillow
+numpy
+opencv-python
