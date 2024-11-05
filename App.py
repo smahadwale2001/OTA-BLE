@@ -76,7 +76,7 @@ def build_gui():
     filenameButton = ttk.Button(main_window, text='Load File', command=lambda: getFileName())
     filenameButton.grid(column=3,row=1,padx=5,pady=5)
 
-    sendButton = ttk.Button(main_window, text='Send File', command=lambda: asyncio doBleFtp())
+    sendButton = ttk.Button(main_window, text='Send File', command=lambda: asyncio.create_task(doBleFtp()))
     sendButton.grid(column=2,row=2,padx=5,pady=5)
     #cflabel = tk.Label(main_window, text="Configure")
     #cflabel.grid(column=2, row=0)
@@ -87,7 +87,7 @@ def build_gui():
     # main_window.update() regularly.
 
 async def doBleFtp():
-    global fileDataChar, fileModeChar, fileDataList, filename
+    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
@@ -95,12 +95,14 @@ async def doBleFtp():
     maxIndex = len(fileDataList)
     cIndex = 0
     while cIndex < maxIndex:
+        #print(getFileDataIncremental(cIndex))
         await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
         cIndex+=1
 
 def getFileDataIncremental(packetIndex):
     global fileDataList
-    Plength = len(fileDataList(packetIndex)).to_bytes(1,'big')
+    Plength = len(fileDataList[packetIndex])
+    Plength = Plength.to_bytes(1,'big')
     Pindex = packetIndex.to_bytes(2,'big')
     return Pindex+Plength+fileDataList[packetIndex]
 
@@ -198,7 +200,7 @@ def device_selection(event):
 
 async def connect():
     """Connect to or disconnect from selected/connected device."""
-    global is_connected
+    global is_connected, BLEclient
 
     if is_connected:
         message_variable.set('Trying to disconnect...')
@@ -212,7 +214,8 @@ async def connect():
 
     try:
         message_variable.set(f'Trying to connect to {name}')
-        async with BleakClient(device, disconnect_callback):
+        BLEclient = BleakClient(device, disconnect_callback):
+        async with BLEclient:
             message_variable.set(f'Device {name} is connected!')
             is_connected = True
             while not disconnect.is_set():
