@@ -214,7 +214,7 @@ async def connect():
 
     try:
         message_variable.set(f'Trying to connect to {name}')
-        BLEclient = BleakClient(device, disconnect_callback):
+        BLEclient = BleakClient(device, disconnect_callback)
         async with BLEclient:
             message_variable.set(f'Device {name} is connected!')
             is_connected = True
