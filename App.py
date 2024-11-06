@@ -11,7 +11,7 @@ scan_result = {}
 is_connected = False
 
 fileDataChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
-fileModeChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
+fileModeChar = '70b41ba2-a3cd-4112-9db0-6f73fedcc74d'
 
 def build_gui():
     """Build a simple GUI."""
@@ -88,6 +88,7 @@ def build_gui():
 
 async def doBleFtp():
     global fileDataChar, fileModeChar, fileDataList, filename, BLEclient
+    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
