@@ -87,7 +87,7 @@ def build_gui():
     # main_window.update() regularly.
 
 async def doBleFtp():
-    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient
+    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
@@ -95,10 +95,27 @@ async def doBleFtp():
     fileDataList=[fileContent[i:i+n] for i in range(0, len(fileContent), n)]
     maxIndex = len(fileDataList)
     cIndex = 0
+    retryIndex = 0
+    await BLEclient.start_notify(fileDataChar,ftp_notify)
+    await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
+    statusVal = 0
     while cIndex < maxIndex:
         #print(getFileDataIncremental(cIndex))
-        await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
-        cIndex+=1
+        if statusVal == 1:
+            statusVal = 0
+            cIndex+=1
+            await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
+        else:
+            retryIndex+=1
+            if(retryIndex < 10):
+                await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
+            else:
+                print("Failed")
+                return
+
+async def ftp_notify(sender, data):
+    global statusVal
+    statusVal = int(data[0])
 
 def getFileDataIncremental(packetIndex):
     global fileDataList
