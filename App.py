@@ -99,7 +99,6 @@ async def doBleFtp():
     retryIndex = 0
     await BLEclient.start_notify(fileDataChar,ftp_notify)
     time.sleep(1)
-    await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
     statusVal = 0
     breakFlag = 0
     totalData = []
@@ -109,11 +108,11 @@ async def doBleFtp():
     print(totalData)
     for i in totalData:
         retryIndex = 0
-        await BLEclient.write_gatt_char(fileDataChar, i, response=true)
+        await BLEclient.write_gatt_char(fileDataChar, i, response=True)
         prevTime = time.time()
         while(statusVal != 1):
             if time.time() - prevTime > 0.4:
-                await BLEclient.write_gatt_char(fileDataChar, i, response=true)
+                await BLEclient.write_gatt_char(fileDataChar, i, response=True)
                 retryIndex+=1
                 prevTime = time.time()
             if retryIndex == 15:
