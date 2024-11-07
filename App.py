@@ -104,7 +104,7 @@ async def doBleFtp():
     breakFlag = 0
     totalData = []
     while cIndex < maxIndex:
-        totalData.append(getFileDataIncremental[cIndex])
+        totalData.append(getFileDataIncremental(cIndex))
         cIndex+=1
     print(totalData)
     for i in totalData:
