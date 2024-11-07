@@ -17,8 +17,9 @@ fileModeChar = '70b41ba2-a3cd-4112-9db0-6f73fedcc74d'
 def build_gui():
     """Build a simple GUI."""
     # For the sake of simplicity, we use some global variables:
-    global main_window, device_list, device_data, message_variable, filename, filenameEntry
+    global main_window, device_list, device_data, message_variable, filename, filenameEntry, activeButton
 
+    activeButton = False
     main_window = tk.Tk()
     main_window.title('Tkinter/bleak asyncio Demo')
 
@@ -88,7 +89,10 @@ def build_gui():
     # main_window.update() regularly.
 
 async def doBleFtp():
-    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal
+    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal, activeButton
+    if activeButton:
+        return
+    activeButton = True
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
@@ -115,19 +119,23 @@ async def doBleFtp():
         prevTime = time.time()
         print('Prev Time',prevTime)
         while(statusVal != 1):
-            if(time.time()-prevTime > 0.4):
+            if(time.time()-prevTime > 0.5):
                 print(time.time() - prevTime,time.time())
                 print('Retry Val',retryIndex,i)
                 await BLEclient.write_gatt_char(fileDataChar, i, response=True)
                 retryIndex+=1
                 prevTime = time.time()
                 print(time.time()-prevTime)
+                print('\n')
             if retryIndex == 15:
                 breakFlag = 1
                 break
         if breakFlag:
             print('Failed')
             break
+    if breakFlag == 0:
+        await BLEclient.write_gatt_char(fileDataChar, b'\xff\xff\x00', response=True)
+    activeButton = False
 
 
 async def ftp_notify(sender, data):
