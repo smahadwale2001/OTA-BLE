@@ -6,6 +6,7 @@ from bleak import BleakClient, BleakError, BleakScanner
 import numpy as np
 from PIL import Image,ImageTk
 from tkinter.filedialog import askopenfilename
+import time
 
 scan_result = {}
 is_connected = False
@@ -87,7 +88,7 @@ def build_gui():
     # main_window.update() regularly.
 
 async def doBleFtp():
-    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex
+    global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
@@ -108,6 +109,7 @@ async def doBleFtp():
         else:
             retryIndex+=1
             if(retryIndex < 10):
+                time.sleep(0.5)
                 await BLEclient.write_gatt_char(fileDataChar, getFileDataIncremental(cIndex), response=True)
             else:
                 print("Failed")
@@ -115,6 +117,7 @@ async def doBleFtp():
 
 async def ftp_notify(sender, data):
     global statusVal
+    print('Got Notification',statusVal)
     statusVal = int(data[0])
 
 def getFileDataIncremental(packetIndex):
