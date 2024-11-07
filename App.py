@@ -98,6 +98,7 @@ async def doBleFtp():
     cIndex = 0
     retryIndex = 0
     await BLEclient.start_notify(fileDataChar,ftp_notify)
+    prevTime = time.time()
     time.sleep(1)
     statusVal = 0
     breakFlag = 0
