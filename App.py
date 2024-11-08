@@ -107,16 +107,24 @@ async def doBleFtp():
     statusVal = 0
     breakFlag = 0
     totalData = []
+    delay_tm = 0.05
     while cIndex < maxIndex:
         totalData.append(getFileDataIncremental(cIndex))
         cIndex+=1
+    cIndex = 0
     print(totalData)
     for i in totalData:
         retryIndex = 0
         statusVal = 0
         #print(i)
-        while(time.time() - prevTime < 0.05):
+        while(time.time() - prevTime < delay_tm):
             pass
+        cIndex += 1
+        if cIndex == 20:
+            delay_tm = 0.5
+            cIndex = 0
+        else:
+            delay_tm = 0.05
         await BLEclient.write_gatt_char(fileDataChar, i, response=True)
         prevTime = time.time()
         print('Prev Time',prevTime)
