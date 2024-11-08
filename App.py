@@ -125,7 +125,7 @@ async def doBleFtp():
         elif cIndex % 100 == 0:
             delay_tm = 2
         else:
-            delay_tm = 0.05
+            delay_tm = 0.01
         await BLEclient.write_gatt_char(fileDataChar, i, response=True)
         prevTime = time.time()
         print('Prev Time',prevTime)
