@@ -117,6 +117,7 @@ async def doBleFtp():
         retryIndex = 0
         statusVal = 0
         #print(i)
+        '''
         while(time.time() - prevTime < delay_tm):
             pass
         cIndex += 1
@@ -133,9 +134,10 @@ async def doBleFtp():
             while(time.time() - prevTime < 2):
                 pass
             await BLEclient.write_gatt_char(fileDataChar, i, response=True)
+        '''
+        await BLEclient.write_gatt_char(fileDataChar, i, response=True)
         prevTime = time.time()
         print('Prev Time',prevTime)
-        continue
         while(statusVal != 1):
             if(time.time()-prevTime >0.4):
                 #print(time.time() - prevTime,time.time())
