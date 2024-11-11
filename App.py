@@ -96,7 +96,7 @@ async def doBleFtp():
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
-    n=248
+    n=77
     fileDataList=[fileContent[i:i+n] for i in range(0, len(fileContent), n)]
     maxIndex = len(fileDataList)
     cIndex = 0
