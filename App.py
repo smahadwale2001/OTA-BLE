@@ -96,7 +96,7 @@ async def doBleFtp():
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
-    n=77
+    n=248
     fileDataList=[fileContent[i:i+n] for i in range(0, len(fileContent), n)]
     maxIndex = len(fileDataList)
     cIndex = 0
@@ -121,9 +121,9 @@ async def doBleFtp():
             pass
         cIndex += 1
         if cIndex % 20 == 0:
-            delay_tm = 0.2
+            delay_tm = 0.1
         elif cIndex % 100 == 0:
-            delay_tm = 1
+            delay_tm = 0.5
         else:
             delay_tm = 0.01
         try:
@@ -134,7 +134,9 @@ async def doBleFtp():
                 pass
             await BLEclient.write_gatt_char(fileDataChar, i, response=True)
         prevTime = time.time()
-        print('Prev Time',prevTime)
+        #print('Prev Time',prevTime)
+        print(cIndex)
+        cIndex+=1
         continue
         while(statusVal != 1):
             if(time.time()-prevTime >0.4):
