@@ -121,9 +121,9 @@ async def doBleFtp():
             pass
         cIndex += 1
         if cIndex % 20 == 0:
-            delay_tm = 0.1
+            delay_tm = 0.2
         elif cIndex % 100 == 0:
-            delay_tm = 0.5
+            delay_tm = 1
         else:
             delay_tm = 0.01
         try:
