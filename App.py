@@ -78,7 +78,7 @@ def build_gui():
     filenameButton = ttk.Button(main_window, text='Load File', command=lambda: getFileName())
     filenameButton.grid(column=3,row=1,padx=5,pady=5)
 
-    sendButton = ttk.Button(main_window, text='Send File', command=lambda: asyncio.create_task(doBleFtp()))
+    sendButton = ttk.Button(main_window, text='Send File', command=lambda: asyncio.create_task(sendBundle()))
     sendButton.grid(column=2,row=2,padx=5,pady=5)
     #cflabel = tk.Label(main_window, text="Configure")
     #cflabel.grid(column=2, row=0)
@@ -88,12 +88,22 @@ def build_gui():
     # We are using the asyncio event loop in 'show' to call
     # main_window.update() regularly.
 
+async def sendBundle():
+    global filename, nextFile
+    await BLEclient.start_notify(fileModeChar,mode_notify)
+    nextFile = False
+    doneFlag = False
+    while not doneFlag:
+        doBleFtp(filename)
+        while not nextFile:
+            pass
+
 async def doBleFtp():
     global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal, activeButton
     if activeButton:
         return
     activeButton = True
-    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
+    #await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
@@ -101,7 +111,6 @@ async def doBleFtp():
     maxIndex = len(fileDataList)
     cIndex = 0
     retryIndex = 0
-    await BLEclient.start_notify(fileDataChar,ftp_notify)
     prevTime = time.time()
     time.sleep(1)
     statusVal = 0
@@ -112,7 +121,7 @@ async def doBleFtp():
         totalData.append(getFileDataIncremental(cIndex))
         cIndex+=1
     cIndex = 0
-    print(totalData)
+    #print(totalData)
     for i in totalData:
         retryIndex = 0
         statusVal = 0
@@ -146,7 +155,6 @@ async def doBleFtp():
                 retryIndex+=1
                 prevTime = time.time()
                 #print(time.time()-prevTime)
-                print('\n')
             if retryIndex == 15:
                 breakFlag = 1
                 break
@@ -161,7 +169,12 @@ async def doBleFtp():
 async def ftp_notify(sender, data):
     global statusVal
     statusVal = int(data[0])
-    print('Got Notification',statusVal)
+    #print('Got Notification',statusVal)
+
+async def mode_notify(sender, data):
+    global filename, nextFile, doneFlag, filesFolderPath
+    filename = filesFolderPath+str(data)
+    print('Starting OTA for ',filename)
 
 def getFileDataIncremental(packetIndex):
     global fileDataList
@@ -172,8 +185,10 @@ def getFileDataIncremental(packetIndex):
 
 
 def getFileName():
-    global filename, filenameEntry
+    global filename, filenameEntry, filesFolderPath
     filename = askopenfilename()
+    filesFolderPath = filename[:len(filename)-filename[::-1].index('/')]
+    print(filesFolderPath)
     filenameEntry.insert(0,filename)
 
 def configure_window():
@@ -223,7 +238,7 @@ def reArrangePacket():
     consumeGraph.photo_image = imageGP
     consumeGraph.configure(image=imageGP)
     consumeGraph.grid(column=0,row=1,columnspan=4,padx=5,pady=5)
-    print(packetDefination)
+    #print(packetDefination)
 
 def saveConfiguration():
     pass
