@@ -89,21 +89,23 @@ def build_gui():
     # main_window.update() regularly.
 
 async def sendBundle():
-    global filename, nextFile
+    global filename, nextFile, activeButton
     await BLEclient.start_notify(fileModeChar,mode_notify)
     nextFile = False
     doneFlag = False
     while not doneFlag:
+        nextFile = False
         doBleFtp(filename)
         while not nextFile:
             pass
+    activeButton = False
 
 async def doBleFtp():
     global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal, activeButton
     if activeButton:
         return
     activeButton = True
-    #await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
+    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
@@ -163,7 +165,6 @@ async def doBleFtp():
             break
     if breakFlag == 0:
         await BLEclient.write_gatt_char(fileDataChar, b'\xff\xff\x00', response=True)
-    activeButton = False
 
 
 async def ftp_notify(sender, data):
@@ -174,6 +175,7 @@ async def ftp_notify(sender, data):
 async def mode_notify(sender, data):
     global filename, nextFile, doneFlag, filesFolderPath
     filename = filesFolderPath+str(data)
+    nextFile = True
     print('Starting OTA for ',filename)
 
 def getFileDataIncremental(packetIndex):
