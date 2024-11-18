@@ -91,6 +91,7 @@ def build_gui():
 async def sendBundle():
     global filename, nextFile, activeButton
     await BLEclient.start_notify(fileModeChar,mode_notify)
+    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start/ubd', response=True)
     nextFile = False
     doneFlag = False
     while not doneFlag:
@@ -105,7 +106,7 @@ async def doBleFtp():
     if activeButton:
         return
     activeButton = True
-    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
+    #await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
@@ -174,7 +175,9 @@ async def ftp_notify(sender, data):
 
 async def mode_notify(sender, data):
     global filename, nextFile, doneFlag, filesFolderPath
-    filename = filesFolderPath+str(data)
+    filename = str(data)
+    filename = filename[:len(filename)-filename[::-1].index('/')]
+    filename = filesFolderPath+filename
     nextFile = True
     print('Starting OTA for ',filename)
 
