@@ -13,7 +13,7 @@ is_connected = False
 
 fileDataChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
 fileModeChar = '70b41ba2-a3cd-4112-9db0-6f73fedcc74d'
-wacs_verufy = ''
+wacs_verufy = '00002941-9b4a-11e8-bfe4-dc4a3e13c140'
 
 def build_gui():
     """Build a simple GUI."""
