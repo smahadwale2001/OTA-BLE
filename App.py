@@ -97,13 +97,14 @@ async def sendBundle():
     doneFlag = False
     while not doneFlag:
         nextFile = False
-        doBleFtp()
+        await doBleFtp()
         while not nextFile:
             pass
     activeButton = False
 
 async def doBleFtp():
     global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal, activeButton
+    print('doBleFtp')
     if activeButton:
         return
     activeButton = True
@@ -132,7 +133,7 @@ async def doBleFtp():
         #print(i)
         while(time.time() - prevTime < delay_tm):
             pass
-        cIndex += 1
+        #cIndex += 1
         if cIndex % 20 == 0:
             delay_tm = 0.1
         elif cIndex % 100 == 0:
