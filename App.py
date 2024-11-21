@@ -13,6 +13,7 @@ is_connected = False
 
 fileDataChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
 fileModeChar = '70b41ba2-a3cd-4112-9db0-6f73fedcc74d'
+wacs_verufy = ''
 
 def build_gui():
     """Build a simple GUI."""
@@ -89,14 +90,14 @@ def build_gui():
     # main_window.update() regularly.
 
 async def sendBundle():
-    global filename, nextFile, activeButton
+    global filename, nextFile, activeButton, BLEclient
     await BLEclient.start_notify(fileModeChar,mode_notify)
     await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start/ubd', response=True)
     nextFile = False
     doneFlag = False
     while not doneFlag:
         nextFile = False
-        doBleFtp(filename)
+        doBleFtp()
         while not nextFile:
             pass
     activeButton = False
