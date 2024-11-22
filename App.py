@@ -15,6 +15,19 @@ fileDataChar = '70b41ba1-a3cd-4112-9db0-6f73fedcc74d'
 fileModeChar = '70b41ba2-a3cd-4112-9db0-6f73fedcc74d'
 wacs_verufy = '00002941-9b4a-11e8-bfe4-dc4a3e13c140'
 
+async def ftp_notify(sender, data):
+    global statusVal
+    statusVal = int(data[0])
+    #print('Got Notification',statusVal)
+
+async def mode_notify(sender, data):
+    global filename, nextFile, doneFlag, filesFolderPath
+    filename = str(data)
+    filename = filename[:len(filename)-filename[::-1].index('/')]
+    filename = filesFolderPath+filename
+    nextFile = True
+    print('Starting OTA for ',filename)
+
 def build_gui():
     """Build a simple GUI."""
     # For the sake of simplicity, we use some global variables:
@@ -92,27 +105,34 @@ def build_gui():
 async def sendBundle():
     global filename, nextFile, activeButton, BLEclient
     await BLEclient.start_notify(fileModeChar,mode_notify)
-    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start/ubd', response=True)
+    await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start/hmi', response=True)
     nextFile = False
     doneFlag = False
-    while not doneFlag:
+    await doBleFtp()
+    filename='/Users/toolsteam/OTA/OTA-BLE/Software/Cyborg_ACU_A_V02_01_00.s19'
+    print(filename)
+    #await doBleFtp()
+    activeButton = False
+    '''while not doneFlag:
         nextFile = False
         await doBleFtp()
         while not nextFile:
             pass
-    activeButton = False
+    activeButton = False'''
 
 async def doBleFtp():
     global fileDataChar, fileModeChar, fileDataList, filename, BLEclient, cIndex, statusVal, activeButton
     print('doBleFtp')
-    if activeButton:
+    print
+    '''if activeButton:
         return
-    activeButton = True
+    activeButton = True'''
     #await BLEclient.write_gatt_char(fileModeChar, b'OTA_Start', response=True)
     with open(filename, mode='rb') as file:
         fileContent = file.read()
     n=248
     fileDataList=[fileContent[i:i+n] for i in range(0, len(fileContent), n)]
+    print(fileDataList)
     maxIndex = len(fileDataList)
     cIndex = 0
     retryIndex = 0
@@ -168,20 +188,10 @@ async def doBleFtp():
             break
     if breakFlag == 0:
         await BLEclient.write_gatt_char(fileDataChar, b'\xff\xff\x00', response=True)
+        return
 
 
-async def ftp_notify(sender, data):
-    global statusVal
-    statusVal = int(data[0])
-    #print('Got Notification',statusVal)
 
-async def mode_notify(sender, data):
-    global filename, nextFile, doneFlag, filesFolderPath
-    filename = str(data)
-    filename = filename[:len(filename)-filename[::-1].index('/')]
-    filename = filesFolderPath+filename
-    nextFile = True
-    print('Starting OTA for ',filename)
 
 def getFileDataIncremental(packetIndex):
     global fileDataList
